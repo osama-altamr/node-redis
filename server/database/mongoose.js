@@ -16,25 +16,20 @@ mongoose.Query.prototype.exec = async function() {
     const key = JSON.stringify(
         Object.assign({}, this.getQuery(), {collection: this.mongooseCollection.name})
     )
-    const cahcedValue = await redisClient.hgetAsync(this.hashKey, key)
+    const cahcedValue = await redisClient.hGet(this.hashKey, key)
     if (cahcedValue) {
-        console.log('from cache')
         const result = JSON.parse(cahcedValue)
         return Array.isArray(result)
                 ? result.map(r => new this.model(r))
                 : new this.model(result)
     }
     const result = await exec.apply(this, arguments)
-    console.log('from DB')
-
-    redisClient.hset(this.hashKey, key, JSON.stringify(result))
+    redisClient.hSet(this.hashKey, key, JSON.stringify(result))
     return result
 }
 
 mongoose.Promise = global.Promise
-
-mongoose.connect(process.env.MONGODB_URI, {useNewUrlParser: true})
-
+mongoose.connect(process.env.MONGODB_URI)
 module.exports = {
     mongoose,
     clearCache(options = {}) {

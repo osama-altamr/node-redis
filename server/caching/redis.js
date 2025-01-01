@@ -1,9 +1,14 @@
 const redis = require('redis');
 const Promise = require('bluebird');
 
-Promise.promisifyAll(redis.RedisClient.prototype);
-Promise.promisifyAll(redis.Multi.prototype);
+const client = redis.createClient({
+    url: process.env.REDIS_URI
+});
 
-const client = redis.createClient(process.env.REDIS_URI);
+client.on('error', err => console.log('Redis Client Error', err));
+
+client.connect();
+
+Promise.promisifyAll(client);
 
 module.exports = client;
